@@ -21,6 +21,7 @@ namespace Utilities
             var imageFormats = new HashSet<string> { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff" };
             var textFormats = new HashSet<string> { ".txt", ".csv", ".log" };
 
+
             while (true)
             {
                 try
