@@ -1,47 +1,55 @@
-﻿/*using System;
+﻿// Program.cs
+using PdfProcessing;
+using ImageProcessing;
+using Utilities;
+using System;
 
-namespace MyProjectWithTesseract
+namespace PdfImageProcessor
 {
     class Program
     {
         static void Main(string[] args)
         {
             bool continueProcessing = true;
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Console.WriteLine("--------------- PdfImageProcessor ---------------\n");
+            Console.ResetColor();
+
             while (continueProcessing)
             {
-                // Kullanıcıdan giriş alalım
-                UserInputHandler inputHandler = new UserInputHandler();
-                var imagePaths = inputHandler.GetImagePaths();
-                string outputDirectory = inputHandler.GetOutputDirectory();
-                string language = inputHandler.GetLanguage();
+                // Seçenekler
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("Lütfen yapmak istediğiniz işlemi seçin:");
+                Console.WriteLine("1. PDF dosyası işleme");
+                Console.WriteLine("2. Görsel dosyası işleme");
+                Console.WriteLine("Çıkmak için 'q' tuşlayın.\n");
+                Console.ResetColor();
 
-                // OCR işlemi için Tesseract implementasyonunu kullanıyoruz
-                IOcrProcessor ocrProcessor = new TesseractOcrProcessor(language, AppDomain.CurrentDomain.BaseDirectory + "tessdata");
+                string selection = Console.ReadLine();
 
-                // Her bir resim için OCR işlemi yapalım
-                foreach (var imagePath in imagePaths)
+                if (selection == "1")
                 {
-                    try
-                    {
-                        ocrProcessor.PerformOcr(imagePath, outputDirectory);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Bir hata oluştu: {ex.Message}");
-                    }
+                    PdfProcessor.ProcessPdf();
                 }
-
-                // Kullanıcıya devam edip etmeyeceğini soralım
-                Console.WriteLine("Yeni bir işlem yapmak istiyor musunuz? (Evet için 'y', Hayır için 'n')");
-                string continueInput = Console.ReadLine().ToLower();
-                if (continueInput != "y")
+                else if (selection == "2")
+                {
+                    ImageProcessor.ProcessImages();
+                }
+                else if (selection.ToLower() == "q")
                 {
                     continueProcessing = false;
-                    Console.WriteLine("Program sonlandırılıyor...");
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Geçersiz seçim. Lütfen tekrar deneyin.\n");
+                    Console.ResetColor();
                 }
             }
+
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Console.WriteLine("Program sonlandırılıyor...");
+            Console.ResetColor();
         }
     }
 }
-
-*/
