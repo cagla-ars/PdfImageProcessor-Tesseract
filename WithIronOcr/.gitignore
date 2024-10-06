@@ -1,0 +1,11 @@
+# .gitignore
+bin/
+obj/
+*.user
+*.suo
+*.log
+*.vs/
+.vscode/
+*.db
+*.mdf
+*.ldf
