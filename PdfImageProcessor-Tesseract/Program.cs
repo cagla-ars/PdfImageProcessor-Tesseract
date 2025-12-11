@@ -1,8 +1,9 @@
-﻿// Program.cs
-using PdfProcessing;
+﻿using PdfProcessing;
 using ImageProcessing;
 using Utilities;
 using System;
+using System.IO;
+using System.Text;
 
 namespace PdfImageProcessor
 {
@@ -10,14 +11,25 @@ namespace PdfImageProcessor
     {
         static void Main(string[] args)
         {
+            Console.OutputEncoding = Encoding.UTF8;
+            Console.InputEncoding = Encoding.UTF8;
+
+            var standardOutput = Console.Out; 
+            Console.SetOut(TextWriter.Null);
+            Console.SetError(TextWriter.Null);
+
             bool continueProcessing = true;
+
+
+            Console.SetOut(standardOutput);
+            Console.SetError(standardOutput);
+
             Console.ForegroundColor = ConsoleColor.Blue;
             Console.WriteLine("--------------- PdfImageProcessor ---------------\n");
             Console.ResetColor();
 
             while (continueProcessing)
             {
-                // Seçenekler
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.WriteLine("Lütfen yapmak istediğiniz işlemi seçin:");
                 Console.WriteLine("1. PDF dosyası işleme");

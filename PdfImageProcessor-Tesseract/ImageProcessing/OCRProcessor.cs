@@ -1,5 +1,4 @@
-﻿// ImageProcessing/OCRProcessor.cs
-using OpenCvSharp;
+﻿using OpenCvSharp;
 using System;
 using System.Globalization;
 using System.IO;
@@ -9,78 +8,80 @@ namespace ImageProcessing
 {
     public static class OCRProcessor
     {
-        public static void AppendTextToFile(string outputDirectory, ref int folderCounter, string imagePath, Mat image, Mat warped, string language, string tessdataPath)
+
+        public static void AppendTextToFile(
+            string outputFile,
+            ref int folderCounter,
+            string imagePath,
+            Mat original,
+            Mat imageForOcr,
+            string language,
+            string tessdataPath)
         {
-            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
-
-            // Ana klasör oluşturma
-            string mainFolder = Path.Combine(Path.GetDirectoryName(outputDirectory), "ProcessedImages");
-            Directory.CreateDirectory(mainFolder);
-
-            // Her bir görsel için yeni bir klasör oluşturma
-            string imageFolder = Path.Combine(mainFolder, $"image{folderCounter}_{timestamp}");
-            Directory.CreateDirectory(imageFolder);
-            folderCounter++; // Klasör sayacını artır
-
-            // Görselleri kaydet
-            string warpedImagePath = Path.Combine(imageFolder, $"{Path.GetFileNameWithoutExtension(imagePath)}_warped.png");
-            string rawImagePath = Path.Combine(imageFolder, $"{Path.GetFileNameWithoutExtension(imagePath)}_raw.png");
-            Cv2.ImWrite(warpedImagePath, warped);
-            Cv2.ImWrite(rawImagePath, image);
-
-            using (var engine = new TesseractEngine(tessdataPath, language, EngineMode.Default))
+            try
             {
-                using (var img = Pix.LoadFromMemory(File.ReadAllBytes(warpedImagePath)))
-                {
-                    using (var page = engine.Process(img))
-                    {
-                        var extractedText = page.GetText();
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
 
-                        // Metni dosyaya ekle
-                        using (StreamWriter sw = new StreamWriter(outputDirectory, append: true))
-                        {
-                            sw.WriteLine($"Resim: {imagePath}");
-                            sw.WriteLine($"İşlenme tarihi: {timestamp}");
-                            sw.WriteLine("Çıkarılan metin:");
-                            sw.WriteLine(extractedText);
-                            sw.WriteLine("------------------------------");
-                        }
+                using (var engine = new TesseractEngine(tessdataPath, language, EngineMode.Default))
+                using (var img = Pix.LoadFromMemory(imageForOcr.ToBytes()))
+                using (var page = engine.Process(img))
+                {
+                    string extractedText = page.GetText();
+
+                    using (StreamWriter sw = new StreamWriter(outputFile, append: true))
+                    {
+                        sw.WriteLine($"Resim: {imagePath}");
+                        sw.WriteLine($"İşlenme Tarihi: {timestamp}");
+                        sw.WriteLine("OCR Çıktısı:");
+                        sw.WriteLine(extractedText);
+                        sw.WriteLine("------------------------------");
                     }
                 }
+
+                folderCounter++;
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("OCR işleminde hata: " + ex.Message);
+                Console.ResetColor();
             }
         }
 
-        public static void ProcessDirectory(string outputDirectory, ref int folderCounter, string imagePath, Mat image, Mat warped, string language, string tessdataPath)
+
+        public static void ProcessDirectory(
+            string outputDirectory,
+            ref int folderCounter,
+            string imagePath,
+            Mat original,
+            Mat imageForOcr,
+            string language,
+            string tessdataPath,
+            string imageFolder)
         {
-            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
-
-            // Ana klasör oluşturma
-            string mainFolder = Path.Combine(outputDirectory, "ProcessedImages");
-            Directory.CreateDirectory(mainFolder);
-
-            string imageFolder = Path.Combine(mainFolder, $"image{folderCounter}_{timestamp}");
-            Directory.CreateDirectory(imageFolder);
-            folderCounter++;
-
-            // Görselleri kaydet
-            string warpedImagePath = Path.Combine(imageFolder, $"{Path.GetFileNameWithoutExtension(imagePath)}_warped.png");
-            string rawImagePath = Path.Combine(imageFolder, $"{Path.GetFileNameWithoutExtension(imagePath)}_raw.png");
-            Cv2.ImWrite(warpedImagePath, warped);
-            Cv2.ImWrite(rawImagePath, image);
-
-            using (var engine = new TesseractEngine(tessdataPath, language, EngineMode.Default))
+            try
             {
-                using (var img = Pix.LoadFromMemory(File.ReadAllBytes(warpedImagePath)))
-                {
-                    using (var page = engine.Process(img))
-                    {
-                        var extractedText = page.GetText();
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
 
-                        // Metni dosyaya yaz
-                        string textFilePath = Path.Combine(imageFolder, $"txt_{timestamp}.txt");
-                        File.WriteAllText(textFilePath, extractedText);
-                    }
+  
+
+                string textFilePath = Path.Combine(imageFolder, $"txt_{timestamp}.txt");
+
+                using (var engine = new TesseractEngine(tessdataPath, language, EngineMode.Default))
+                using (var img = Pix.LoadFromMemory(imageForOcr.ToBytes()))
+                using (var page = engine.Process(img))
+                {
+                    string extractedText = page.GetText();
+                    File.WriteAllText(textFilePath, extractedText);
                 }
+
+                folderCounter++;
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("OCR işleminde hata: " + ex.Message);
+                Console.ResetColor();
             }
         }
     }

@@ -1,10 +1,8 @@
-﻿// ImageProcessing/ImageHandler.cs
-using OpenCvSharp;
+﻿using OpenCvSharp;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using Tesseract;
 using Utilities;
 
 namespace ImageProcessing
@@ -13,50 +11,89 @@ namespace ImageProcessing
     {
         public static List<string> WarpedImagePaths { get; private set; } = new List<string>();
 
-        public static void ProcessImage(string imagePath, string outputDirectory, ref int folderCounter, string language, string tessdataPath)
+        public static void ProcessImage(
+            string imagePath,
+            string outputDirectory,
+            ref int folderCounter,
+            string language,
+            string tessdataPath)
         {
             try
             {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine($"İşlem başlatılıyor: {imagePath}");
-                Console.ResetColor();
 
-                // Görüntüyü yükleyin ve gri tonlamaya çevirin
-                var (image, warped) = PerspectiveCorrector.LoadAndProcessImage(imagePath);
+                //  Görüntüyü yükle ve perspektif kontrolü yap 
+                var (originalImage, warpedImage) = PerspectiveCorrector.LoadAndProcessImage(imagePath);
 
-                if (image == null || warped == null)
+                // Görsel yüklenememişse işlemi kes
+                if (originalImage == null)
                 {
-                    Console.ForegroundColor = ConsoleColor.Magenta;
-                    Console.WriteLine($"Görüntü işlenemedi: {imagePath}\n");
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Görüntü işlenemedi\n");
                     Console.ResetColor();
                     return;
                 }
 
-                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
+                Mat imageForOcr = warpedImage ?? originalImage;
 
-                // Dosya yolu mu, dizin yolu mu olduğunu kontrol edelim
+                if (warpedImage == null)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("Perspektif düzeltme uygulanmadı → Sadece OCR yapılacak, görsel kaydedilmeyecek.");
+                    Console.ResetColor();
+                }
+
                 if (Path.HasExtension(outputDirectory))
                 {
-                    // Tek bir dosyaya OCR çıktısını ekleyelim
-                    OCRProcessor.AppendTextToFile(outputDirectory, ref folderCounter, imagePath, image, warped, language, tessdataPath);
+                    OCRProcessor.AppendTextToFile(
+                        outputDirectory,
+                        ref folderCounter,
+                        imagePath,
+                        originalImage,
+                        imageForOcr,
+                        language,
+                        tessdataPath);
+
+
+                    originalImage?.Dispose();
+                    warpedImage?.Dispose();
+                    return;
                 }
-                else
+
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
+                string mainFolder = Path.Combine(outputDirectory, "ProcessedImages");
+                Directory.CreateDirectory(mainFolder);
+
+                string imageFolder = Path.Combine(mainFolder, $"image{folderCounter}_{timestamp}");
+                Directory.CreateDirectory(imageFolder);
+
+                folderCounter++;
+
+                string warpedImagePath = null;
+
+
+                if (warpedImage != null)
                 {
-                    // Dizin yoluna her görsel için ayrı klasör oluşturalım
-                    OCRProcessor.ProcessDirectory(outputDirectory, ref folderCounter, imagePath, image, warped, language, tessdataPath);
+                    warpedImagePath = Path.Combine(
+                        imageFolder,
+                        $"{Path.GetFileNameWithoutExtension(imagePath)}_warped.png");
+
+                    Cv2.ImWrite(warpedImagePath, warpedImage);
+                    WarpedImagePaths.Add(warpedImagePath);
                 }
 
-                // Warped image path ekle
-                string warpedImageFullPath = Path.Combine(outputDirectory, "ProcessedImages", $"image{folderCounter - 1}_{timestamp}", $"{Path.GetFileNameWithoutExtension(imagePath)}_warped.png");
-                WarpedImagePaths.Add(warpedImageFullPath);
+                OCRProcessor.ProcessDirectory(
+                    outputDirectory,
+                    ref folderCounter,
+                    imagePath,
+                    originalImage,
+                    imageForOcr,
+                    language,
+                    tessdataPath,
+                    imageFolder);
 
-                Console.ForegroundColor = ConsoleColor.Magenta;
-                Console.WriteLine("İşlem tamamlandı. İlgili dosyalara çıktı dizini üzerinden ulaşabilirsiniz.\n");
-                Console.ResetColor();
 
-                // Kaynakları serbest bırakma
-                image.Dispose();
-                warped.Dispose();
+                originalImage?.Dispose();
+                warpedImage?.Dispose();
             }
             catch (Exception ex)
             {

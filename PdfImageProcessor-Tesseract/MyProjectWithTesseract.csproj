@@ -14,6 +14,24 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="tessdata\eng.traineddata" />
+    <None Remove="tessdata\rus.traineddata" />
+    <None Remove="tessdata\tur.traineddata" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="tessdata\eng.traineddata">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="tessdata\rus.traineddata">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="tessdata\tur.traineddata">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DocX" Version="3.0.1" />
     <PackageReference Include="DotNetEnv" Version="3.1.1" />
     <PackageReference Include="Ghostscript.NET" Version="1.2.3.1" />
