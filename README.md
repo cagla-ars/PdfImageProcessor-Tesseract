@@ -122,7 +122,6 @@ rus.traineddata
 
 #### Kod içinde kullanım
 
-```
 using (var engine = new TesseractEngine(@"./tessdata", "tur", EngineMode.Default))
 {
     using var img = Pix.LoadFromFile(imagePath);
